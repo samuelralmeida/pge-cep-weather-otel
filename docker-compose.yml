@@ -1,0 +1,20 @@
+services:
+  service-a:
+    env_file: ".env"
+    container_name: service-a
+    build:
+      context: .
+      dockerfile: cmd/service-a/Dockerfile
+    ports:
+      - "${SERVICE_A_PORT}:${SERVICE_A_PORT}"
+    restart: always
+
+  service-b:
+    env_file: ".env"
+    container_name: service-b
+    build:
+      context: .
+      dockerfile: cmd/service-b/Dockerfile
+    ports:
+      - "${SERVICE_B_PORT}:${SERVICE_B_PORT}"
+    restart: always
