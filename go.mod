@@ -1,9 +1,8 @@
-module pge-otel
+module github.com/samuelralmeida/pge-cep-weather-otel
 
 go 1.22.10
 
 require (
-	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-chi/render v1.0.3
 	go.opentelemetry.io/otel v1.33.0

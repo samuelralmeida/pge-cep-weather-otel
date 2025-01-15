@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"pge-otel/internal/handler"
-	"pge-otel/internal/tracing"
 	"time"
+
+	"github.com/samuelralmeida/pge-cep-weather-otel/internal/handler"
+	"github.com/samuelralmeida/pge-cep-weather-otel/internal/tracing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
