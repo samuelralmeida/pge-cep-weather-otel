@@ -48,7 +48,7 @@ Baseado no cenário conhecido "Sistema de temperatura por CEP" denominado Servi�
     - Sendo F = Fahrenheit
     - Sendo C = Celsius
     - Sendo K = Kelvin
-- Para dúvidas da implementação do OTEL, você pode [clicar aqui](https://opentelemetry.io/docs/languages/go/getting-started/])
+- Para dúvidas da implementação do OTEL, você pode [clicar aqui](https://opentelemetry.io/docs/languages/go/getting-started/)
 - Para implementação de spans, você pode [clicar aqui](https://opentelemetry.io/docs/languages/go/instrumentation/#creating-spans)
 - Você precisará utilizar um serviço de [collector do OTEL](https://opentelemetry.io/docs/collector/quick-start/)
 - Para mais informações sobre Zipkin, você pode [clicar aqui](https://zipkin.io/)
@@ -63,6 +63,7 @@ Baseado no cenário conhecido "Sistema de temperatura por CEP" denominado Servi�
 
 - crie um arquivo `.env` a partir do arquivo `example.env`
 - coloque sua API_KEY do https://www.weatherapi.com/ no `.env`
-- defina a porta que deseja subir a aplicação no `.env`
+- as configurações de cada serviço estão como variáveis de ambiente no `docker-compose.yaml`
 - `make run` para executar o docker compose e subir a aplicação
-- ...
+- faça uma requisição ao service A: `curl -X POST localhost:8081 -d '{"cep": "30280160"}'`
+- acesse o cliente zipkin: `http://localhost:9411/zipkin` e veja os traces entres os serviços A e B

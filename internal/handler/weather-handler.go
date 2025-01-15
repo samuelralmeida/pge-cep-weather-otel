@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"context"
@@ -8,57 +8,20 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
-type config struct {
-	port          string
-	weatherApiKey string
-}
+func (h *Handler) WeatherHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	carrier := propagation.HeaderCarrier(r.Header)
+	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
+	_, span := h.Tracer.Start(ctx, "weather-handler")
+	defer span.End()
 
-var conf config
-
-func init() {
-	port := os.Getenv("SERVICE_B_PORT")
-	weatherApiKey := os.Getenv("WEATHER_API_KEY")
-
-	conf = config{
-		port:          port,
-		weatherApiKey: weatherApiKey,
-	}
-}
-
-func main() {
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	r.Use(middleware.Timeout(60 * time.Second))
-
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
-		w.Write([]byte("route does not exist"))
-	})
-
-	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(405)
-		w.Write([]byte("method is not valid"))
-	})
-
-	r.Get("/weather/{cep}", weatherHandler)
-
-	log.Println("listening on port", conf.port)
-	http.ListenAndServe(":"+conf.port, r)
-}
-
-func weatherHandler(w http.ResponseWriter, r *http.Request) {
 	cep := chi.URLParam(r, "cep")
 
 	cepInfo, err := getLocationData(cep)
@@ -74,7 +37,7 @@ func weatherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	weatherInfo, err := getWeatherData(cepInfo.City)
+	weatherInfo, err := getWeatherData(cepInfo.City, h.WeatherApiKey)
 	if err != nil {
 		log.Println("getWeatherData:", err)
 		http.Error(w, "error to get weather data in weather api", http.StatusInternalServerError)
@@ -143,7 +106,7 @@ func (wi *WeatherInfo) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func getWeatherData(location string) (*WeatherInfo, error) {
+func getWeatherData(location string, weatherApiKey string) (*WeatherInfo, error) {
 	type respData struct {
 		Current struct {
 			TempC float64 `json:"temp_c"`
@@ -153,7 +116,7 @@ func getWeatherData(location string) (*WeatherInfo, error) {
 
 	var data respData
 
-	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?key=%s&q=%s&aqi=no", conf.weatherApiKey, url.QueryEscape(location))
+	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?key=%s&q=%s&aqi=no", weatherApiKey, url.QueryEscape(location))
 
 	err := request(context.Background(), url, &data)
 	if err != nil {
@@ -172,7 +135,6 @@ func getWeatherData(location string) (*WeatherInfo, error) {
 }
 
 func request(ctx context.Context, url string, data any) error {
-
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("error to create request: %w", err)
